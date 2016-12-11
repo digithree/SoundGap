@@ -1,12 +1,13 @@
+/* THIS FILE NOT UNDER COPYRIGHT
+ *
+ * @author digithree
+ */
+
 package github.digithree.soundgap;
 
 import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
-
-/**
- * Created by simonkenny on 10/12/2016.
- */
 
 public class App extends Application {
 
