@@ -8,16 +8,21 @@ package github.digithree.soundgap.ui.interfaces;
 
 public interface IMainView {
 
-    void setParamsText(String text);
-    void setPeakText(String text);
+    // misc
+    void setStatusText(String text);
 
-    // peak list
-    void addPeakListItem(String text);
-    void clearPeakListItems();
+    // receiving messages
+    void showListeningForMessages();
+    void showStopListeningForMessages();
+    void showListeningForMessagesError();
+
+    // message list
+    void addNewMessage(String text);
+    void clearMessages();
 
     // sending messages
-    String getMessage();
-
-    // error feedback
+    String getMessageToSend();
+    void showSendMessageInProgress();
+    void showSendMessageSuccess();
     void showSendMessageError();
 }

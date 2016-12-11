@@ -10,40 +10,24 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="github.digithree.soundgap.ui.activities.MainView">
+    tools:context="github.digithree.soundgap.ui.activities.MainActivity">
 
-    <TextView
-        android:id="@+id/text_view_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <LinearLayout
+    <Button
+        android:id="@+id/btn_listen"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:id="@+id/text_view_detail"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"/>
-
-        <Button
-            android:id="@+id/btn_clear_list"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|right|end"
-            android:text="Clear List"/>
-    </LinearLayout>
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginBottom="@dimen/margin_standard"
+        android:text="@string/btn_listen"/>
 
     <ScrollView
-        android:id="@+id/scroll_view_peaks"
+        android:id="@+id/scroll_view_messages"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="16dp">
+        android:background="@color/lightBackground">
         <LinearLayout
-            android:id="@+id/ll_view_peaks"
+            android:id="@+id/ll_messages"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"/>
@@ -51,21 +35,32 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/margin_small">
         <EditText
             android:id="@+id/edit_text_message"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
-            android:hint="Message to send"/>
+            android:hint="@string/message_hint"/>
 
         <Button
             android:id="@+id/btn_send"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:layout_marginLeft="8dp"
-            android:text="Send"/>
+            android:layout_marginLeft="@dimen/margin_small"
+            android:layout_marginStart="@dimen/margin_small"
+            android:text="@string/btn_send"/>
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/text_view_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/margin_small"
+        android:background="@color/lightBackground"
+        android:text="@string/status_prefix"
+        android:padding="@dimen/margin_small"/>
 
 </LinearLayout>

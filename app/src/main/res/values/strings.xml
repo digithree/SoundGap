@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">Sound Gap</string>
+
+    <string name="status_prefix">Status: </string>
+
+    <string name="btn_send">Send</string>
+    <string name="btn_clear">Clear</string>
+    <string name="btn_listen">Listen</string>
+    <string name="btn_stop_listen">Stop Listening</string>
+
+    <string name="message_hint">Message to send</string>
+
+    <string name="listen_for_message_in_progress">Listening for messages...</string>
+    <string name="listen_for_message_stopped">Stopped listening for messages</string>
+    <string name="listen_for_message_failure">Failed to listen for message</string>
+
+    <string name="send_message_in_progress">Sending message...</string>
+    <string name="send_message_success">Message sent</string>
+    <string name="send_message_failure">Failed to send message</string>
 </resources>

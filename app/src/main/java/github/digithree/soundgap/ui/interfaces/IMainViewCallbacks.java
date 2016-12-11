@@ -9,6 +9,8 @@ public interface IMainViewCallbacks {
 
     void setRecordPermission(boolean hasPermission);
 
+    void clickListen();
+
     void clickPeakListClear();
     void clickSendMessage();
 }

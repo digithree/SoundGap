@@ -14,7 +14,7 @@ import github.digithree.soundgap.ui.interfaces.IMainView;
 import github.digithree.soundgap.ui.interfaces.IMainViewCallbacks;
 
 public class MainPresenter extends BasePresenter<IMainView> implements IActivityLifecycle,
-        IMainViewCallbacks, ReceiverMessageHandler.Callback {
+        IMainViewCallbacks, ReceiverMessageHandler.Callback, SendMessageHandler.Callback {
 
     private SendMessageHandler mSendMessageHandler;
     private ReceiverMessageHandler mReceiverMessageHandler;
@@ -24,7 +24,7 @@ public class MainPresenter extends BasePresenter<IMainView> implements IActivity
     public MainPresenter(IMainView view) {
         super(view);
 
-        mSendMessageHandler = new SendMessageHandler();
+        mSendMessageHandler = new SendMessageHandler(this);
         mReceiverMessageHandler = new ReceiverMessageHandler(this);
 
         hasRecordPermission = false;
@@ -36,20 +36,29 @@ public class MainPresenter extends BasePresenter<IMainView> implements IActivity
     @Override
     public void setRecordPermission(boolean hasPermission) {
         hasRecordPermission = hasPermission;
+    }
+
+    @Override
+    public void clickListen() {
         if (hasRecordPermission) {
-            // TODO : remove this from automatic starting
-            mReceiverMessageHandler.start();
+            if (!mReceiverMessageHandler.isActive()) {
+                mReceiverMessageHandler.start();
+            } else {
+                mReceiverMessageHandler.stop();
+            }
+        } else {
+            getView().showListeningForMessagesError();
         }
     }
 
     @Override
     public void clickPeakListClear() {
-        getView().clearPeakListItems();
+        getView().clearMessages();
     }
 
     @Override
     public void clickSendMessage() {
-        String messageText = getView().getMessage();
+        String messageText = getView().getMessageToSend();
         if (!TextUtils.isEmpty(messageText)) {
             mSendMessageHandler.sendMessage(messageText);
         } else {
@@ -67,28 +76,43 @@ public class MainPresenter extends BasePresenter<IMainView> implements IActivity
 
     @Override
     public void onResume() {
-        // TODO : remove this from automatic starting
-        if (hasRecordPermission) {
-            mReceiverMessageHandler.start();
-        }
+        //not used
     }
 
 
     // ReceiverMessageHandler.Callback implementation
 
     @Override
-    public void setParamText(String text) {
-        getView().setParamsText(text);
+    public void startedListening() {
+        getView().showListeningForMessages();
     }
 
     @Override
-    public void setCurrentPeakText(String text) {
-        getView().setPeakText(text);
+    public void stoppedListening() {
+        getView().showStopListeningForMessages();
     }
 
     @Override
-    public void addTriggeredNote(String text) {
-        getView().addPeakListItem(text);
+    public void heardMessage(String message) {
+        getView().addNewMessage(message);
+    }
+
+
+    // SendMessageHandler.Callback implementation
+
+    @Override
+    public void startedSending() {
+        getView().showSendMessageInProgress();
+    }
+
+    @Override
+    public void sendError() {
+        getView().showSendMessageError();
+    }
+
+    @Override
+    public void messageSent() {
+        getView().showSendMessageSuccess();
     }
 }
 

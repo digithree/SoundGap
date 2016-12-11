@@ -13,7 +13,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -26,17 +30,16 @@ import github.digithree.soundgap.R;
 import github.digithree.soundgap.ui.interfaces.IMainView;
 import github.digithree.soundgap.ui.presenters.MainPresenter;
 
-public class MainView extends AppCompatActivity implements IMainView {
-    private static final String TAG = MainView.class.getSimpleName();
+public class MainActivity extends AppCompatActivity implements IMainView {
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private static final int REQUEST_CODE_ASK_PERMISSIONS = 123;
 
-    private TextView mTvTitle;
-    private TextView mTvDetail;
-    private LinearLayout mLlPeakInfo;
-    private Button mBtnClearList;
+    private Button mBtnListen;
+    private LinearLayout mLlMessages;
     private EditText mEtMessage;
     private Button mBtnSend;
+    private TextView mTvStatus;
 
     private MainPresenter mMainPresenter;
 
@@ -49,10 +52,10 @@ public class MainView extends AppCompatActivity implements IMainView {
 
         mMainPresenter = new MainPresenter(this);
 
-        mBtnClearList.setOnClickListener(new View.OnClickListener() {
+        mBtnListen.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mMainPresenter.clickPeakListClear();
+                mMainPresenter.clickListen();
             }
         });
 
@@ -71,13 +74,32 @@ public class MainView extends AppCompatActivity implements IMainView {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Log.i(TAG, item.toString());
+        switch (item.getItemId()) {
+            case R.id.action_clear:
+                mMainPresenter.clickPeakListClear();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
     private void bindViews() {
-        mTvTitle = (TextView) findViewById(R.id.text_view_title);
-        mTvDetail = (TextView) findViewById(R.id.text_view_detail);
-        mLlPeakInfo = (LinearLayout) findViewById(R.id.ll_view_peaks);
-        mBtnClearList = (Button) findViewById(R.id.btn_clear_list);
+        mBtnListen  = (Button) findViewById(R.id.btn_listen);
+        mLlMessages = (LinearLayout) findViewById(R.id.ll_messages);
         mEtMessage = (EditText) findViewById(R.id.edit_text_message);
         mBtnSend = (Button) findViewById(R.id.btn_send);
+        mTvStatus = (TextView) findViewById(R.id.text_view_status);
     }
 
     @Override
@@ -96,36 +118,62 @@ public class MainView extends AppCompatActivity implements IMainView {
     // IMainView
 
     @Override
-    public void setParamsText(String text) {
-        mTvTitle.setText(text);
+    public void setStatusText(String text) {
+        mTvStatus.setText(String.format("%s%s", getString(R.string.status_prefix), text));
     }
 
     @Override
-    public void setPeakText(String text) {
-        mTvDetail.setText(text);
+    public void showListeningForMessages() {
+        setStatusText(getString(R.string.listen_for_message_in_progress));
+        mBtnListen.setText(R.string.btn_stop_listen);
     }
 
     @Override
-    public void addPeakListItem(String text) {
-        TextView textView = (TextView) LayoutInflater.from(mLlPeakInfo.getContext())
-                .inflate(R.layout.view_freq_item, mLlPeakInfo, false);
+    public void showStopListeningForMessages() {
+        setStatusText(getString(R.string.listen_for_message_stopped));
+        mBtnListen.setText(R.string.btn_listen);
+    }
+
+    @Override
+    public void showListeningForMessagesError() {
+        setStatusText(getString(R.string.listen_for_message_failure));
+        mBtnListen.setText(R.string.btn_listen);
+    }
+
+    @Override
+    public void addNewMessage(String text) {
+        TextView textView = (TextView) LayoutInflater.from(mLlMessages.getContext())
+                .inflate(R.layout.view_freq_item, mLlMessages, false);
         textView.setText(text);
-        mLlPeakInfo.addView(textView);
+        mLlMessages.addView(textView);
     }
 
     @Override
-    public void clearPeakListItems() {
-        mLlPeakInfo.removeAllViews();
+    public void clearMessages() {
+        mLlMessages.removeAllViews();
     }
 
     @Override
-    public String getMessage() {
+    public String getMessageToSend() {
         return mEtMessage.getText().toString();
     }
 
     @Override
+    public void showSendMessageInProgress() {
+        setStatusText(getString(R.string.send_message_in_progress));
+        mBtnSend.setEnabled(false);
+    }
+
+    @Override
+    public void showSendMessageSuccess() {
+        setStatusText(getString(R.string.send_message_success));
+        mBtnSend.setEnabled(true);
+    }
+
+    @Override
     public void showSendMessageError() {
-        Toast.makeText(App.getStaticInstance(), "Can't send empty message", Toast.LENGTH_SHORT).show();
+        setStatusText(getString(R.string.send_message_failure));
+        mBtnSend.setEnabled(true);
     }
 
     // Permissions handling for Marshmallow +

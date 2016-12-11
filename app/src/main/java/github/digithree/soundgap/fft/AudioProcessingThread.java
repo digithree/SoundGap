@@ -45,9 +45,9 @@ import github.digithree.soundgap.App;
 public class AudioProcessingThread extends Thread {
 
     public interface Callback {
+        @Deprecated
         void onInitParams(float sampleRate, int fftLen, double timeDurationPref, int nFFTAverage);
-        void updateRawData(final double[] data);
-        void updatePeakData(double maxAmpFreq, double maxAmpDB);
+        void updateRawData(final double[] data, final double maxAmpFreq, final double maxAmpDB);
         void updateRec(double secs);
     }
 
@@ -356,8 +356,7 @@ public class AudioProcessingThread extends Thread {
 
     private void update(final double[] data) {
         if (mCallback != null) {
-            mCallback.updateRawData(spectrumDBcopy);
-            mCallback.updatePeakData(maxAmpFreq, maxAmpDB);
+            mCallback.updateRawData(spectrumDBcopy, maxAmpFreq, maxAmpDB);
         }
         /*
         if (graphView.getShowMode() == 1) {
