@@ -41,6 +41,7 @@ public class MainPresenter extends BasePresenter<IMainView> implements IActivity
     @Override
     public void clickListen() {
         if (hasRecordPermission) {
+            mSendMessageHandler.cancelSendingMessage();
             if (!mReceiverMessageHandler.isActive()) {
                 mReceiverMessageHandler.start();
             } else {
@@ -58,6 +59,9 @@ public class MainPresenter extends BasePresenter<IMainView> implements IActivity
 
     @Override
     public void clickSendMessage() {
+        // stop listening first, if listening
+        mReceiverMessageHandler.stop();
+        // send message
         String messageText = getView().getMessageToSend();
         if (!TextUtils.isEmpty(messageText)) {
             mSendMessageHandler.sendMessage(messageText);

@@ -14,7 +14,7 @@
  ** Weibo: http://weibo.com/gujicheng197                                **
  *************************************************************************
  *
- * Modified on 10th Dec 2016 by digithree
+ * First modified on 10th Dec 2016 by digithree
  * Some parts refactored from Encoder.java in same package
  */
 
@@ -24,15 +24,6 @@
 package github.digithree.soundgap.player;
 
 public class Common {
-    public final static int[] CODE_FREQUENCY = {
-            1046, 1109, 1175, 1245, 1319, 1397, 1480, 1568, 1661, 1760, 1865, 1976
-    };
-    //      START, 0,    1,    2,   3,    4,    5,    6,    7,    8,    9,    END
-    //      C,     C#,   D,    D#,  E,    F,    F#,   G,    G#,   A,    A#,   END
-
-    public final static int START_TOKEN = 0;
-    public final static int STOP_TOKEN = CODE_FREQUENCY.length - 1;
-    public final static String DEFAULT_CODE_BOOK = "12345";
 
     public final static int DEFAULT_BUFFER_SIZE = 4096;
     public final static int DEFAULT_BUFFER_COUNT = 3;

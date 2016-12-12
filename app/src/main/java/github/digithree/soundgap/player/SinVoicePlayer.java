@@ -39,7 +39,6 @@ public class SinVoicePlayer implements Encoder.Listener, Encoder.Callback, PcmPl
 
     private final static int DEFAULT_GEN_DURATION = 200;
 
-    private String mCodeBook;
     private List<Integer> mCodes = new ArrayList<Integer>();
 
     private Encoder mEncoder;
@@ -58,14 +57,10 @@ public class SinVoicePlayer implements Encoder.Listener, Encoder.Callback, PcmPl
     }
 
     public SinVoicePlayer() {
-        this(Common.DEFAULT_CODE_BOOK);
+        this(Common.DEFAULT_SAMPLE_RATE, Common.DEFAULT_BUFFER_SIZE, Common.DEFAULT_BUFFER_COUNT);
     }
 
-    public SinVoicePlayer(String codeBook) {
-        this(codeBook, Common.DEFAULT_SAMPLE_RATE, Common.DEFAULT_BUFFER_SIZE, Common.DEFAULT_BUFFER_COUNT);
-    }
-
-    public SinVoicePlayer(String codeBook, int sampleRate, int bufferSize, int buffCount) {
+    public SinVoicePlayer(int sampleRate, int bufferSize, int buffCount) {
         mState = STATE_STOP;
         mBuffer = new Buffer(buffCount, bufferSize);
 
@@ -73,46 +68,33 @@ public class SinVoicePlayer implements Encoder.Listener, Encoder.Callback, PcmPl
         mEncoder.setListener(this);
         mPlayer = new PcmPlayer(this, sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
         mPlayer.setListener(this);
-
-        setCodeBook(codeBook);
     }
 
     public void setListener(Listener listener) {
         mListener = listener;
     }
 
-    public void setCodeBook(String codeBook) {
-        if (!TextUtils.isEmpty(codeBook) && codeBook.length() < Encoder.getMaxCodeCount() - 1) {
-            mCodeBook = codeBook;
-        }
-    }
-
     private boolean convertTextToCodes(String text) {
-        boolean ret = true;
-
         if (!TextUtils.isEmpty(text)) {
             mCodes.clear();
-            mCodes.add(Common.START_TOKEN);
-            int len = text.length();
-            for (int i = 0; i < len; ++i) {
-                char ch = text.charAt(i);
-                int index = mCodeBook.indexOf(ch);
-                if (index > -1) {
-                    mCodes.add(index + 1);
+            mCodes.add(CodeBook.getInstance().getStartTokenIdx());
+            int lastCode = -1;
+            for (int i = 0; i < text.length() ; i++) {
+                int code = text.charAt(i) - '0';
+                if (code >= 0 && code <= 9) {
+                    if (code == lastCode) {
+                        mCodes.add(CodeBook.getInstance().getStartTokenIdx());
+                    }
+                    mCodes.add(code + 1); //add offset of 1 as start token is idx 0
+                    lastCode = code;
                 } else {
-                    ret = false;
-                    Log.d(TAG, "invalidate char:" + ch);
-                    break;
+                    // invalid code
+                    return false;
                 }
             }
-            if (ret) {
-                mCodes.add(Common.STOP_TOKEN);
-            }
-        } else {
-            ret = false;
         }
-
-        return ret;
+        mCodes.add(CodeBook.getInstance().getEndTokenIdx());
+        return true;
     }
 
     public void play(final String text) {
@@ -120,7 +102,7 @@ public class SinVoicePlayer implements Encoder.Listener, Encoder.Callback, PcmPl
     }
 
     public void play(final String text, final boolean repeat, final int muteInterval) {
-        if (STATE_STOP == mState && null != mCodeBook && convertTextToCodes(text)) {
+        if (STATE_STOP == mState && convertTextToCodes(text)) {
             mState = STATE_PENDING;
 
             mPlayThread = new Thread() {

@@ -14,8 +14,10 @@ import java.util.Locale;
 import github.digithree.soundgap.App;
 import github.digithree.soundgap.fft.AudioProcessingThread;
 import github.digithree.soundgap.fft.FrequencyProcessingHelper;
+import github.digithree.soundgap.player.CodeBook;
 
 public class ReceiverMessageHandler implements AudioProcessingThread.Callback {
+    private static final String TAG = ReceiverMessageHandler.class.getSimpleName();
 
     public interface Callback {
         void startedListening();
@@ -33,13 +35,19 @@ public class ReceiverMessageHandler implements AudioProcessingThread.Callback {
 
     private ArrayList<FrequencyProcessingHelper.MidiNote> midiNoteArrayList;
 
+    private String mLastMessage;
+
     private boolean mActive = false;
+    private boolean mListening = false;
 
 
     public ReceiverMessageHandler(@NonNull Callback callback) {
         mCallback = callback;
         midiNoteArrayList = new ArrayList<>();
     }
+
+
+    // public interface
 
     public boolean isActive() {
         return mActive;
@@ -69,12 +77,55 @@ public class ReceiverMessageHandler implements AudioProcessingThread.Callback {
         }
     }
 
+    public String getLastMessage() {
+        return mLastMessage;
+    }
+
+
     // internal process
 
-    private void processMidiNotes() {
+    private void processMidiNotes(FrequencyProcessingHelper.MidiNote midiNote) {
+        Log.d(TAG, "processMidiNotes, got note"+midiNote.toString());
         // TODO : look for messages in midiNoteArrayList
         // TODO : trigger mCallback.heardMessage(message) if find one
+        if (!mListening) {
+            Log.d(TAG, "processMidiNotes, not listening yet");
+            if (midiNote.getStr().equals(CodeBook.getInstance().getCodeNoteNameTable()[CodeBook.getInstance().getStartTokenIdx()])) {
+                mListening = true;
+                // will capture notes the next round
+                Log.d(TAG, "processMidiNotes, got start note");
+            }
+        } else {
+            if (midiNote.getStr().equals(CodeBook.getInstance().getCodeNoteNameTable()[CodeBook.getInstance().getEndTokenIdx()])) {
+                Log.d(TAG, "processMidiNotes, stopping listening");
+                mListening = false;
+                stop();
+                extractMessageFromHeardNotes();
+            } else if (midiNote.getStr().equals(CodeBook.getInstance().getCodeNoteNameTable()[CodeBook.getInstance().getStartTokenIdx()])) {
+                //ignore, used as spacer
+                Log.d(TAG, "processMidiNotes, heard spacer, ignoring");
+            } else {
+                Log.d(TAG, "processMidiNotes, added note");
+                midiNoteArrayList.add(midiNote);
+            }
+        }
     }
+
+    private void extractMessageFromHeardNotes() {
+        Log.d(TAG, "extractMessageFromHeardNotes");
+        StringBuilder stringBuilder = new StringBuilder();
+        for (FrequencyProcessingHelper.MidiNote midiNote : midiNoteArrayList) {
+            stringBuilder.append(String.format(Locale.getDefault(), "%d", (midiNote.getNote() - 1)));
+        }
+        String decodedMessage = MessageCodex.decode(stringBuilder.toString());
+        if (decodedMessage != null) {
+            mLastMessage = decodedMessage;
+            if (mCallback != null) {
+                mCallback.heardMessage(decodedMessage);
+            }
+        }
+    }
+
 
     // AudioProcessingThread.Callback implementation
 
@@ -101,17 +152,21 @@ public class ReceiverMessageHandler implements AudioProcessingThread.Callback {
             // discard if freq zero, send on init
             return;
         }
-        FrequencyProcessingHelper.MidiNote midiNote = FrequencyProcessingHelper.getMidinote(maxAmpFreq);
+        final FrequencyProcessingHelper.MidiNote midiNote = FrequencyProcessingHelper.getMidinote(maxAmpFreq);
         String peakInfoStr = buildPeakInfoString(maxAmpFreq, maxAmpDB, midiNote);
-        Log.v("ReceiverMessageHandler", peakInfoStr);
+        //Log.v("ReceiverMessageHandler", peakInfoStr);
         if (maxAmpDB >= MIN_TRIGGER_DB) {
             if (midiNote == null || mMidiNote == null
                     || !mMidiNote.getStr().equals(midiNote.getStr())) {
-                midiNoteArrayList.add(midiNote);
+                App.getStaticInstance().getMainThreadHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        processMidiNotes(midiNote);
+                    }
+                });
             }
         }
         mMidiNote = midiNote;
-        processMidiNotes();
     }
 
     @Override

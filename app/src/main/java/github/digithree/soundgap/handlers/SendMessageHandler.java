@@ -6,6 +6,7 @@
 package github.digithree.soundgap.handlers;
 
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import github.digithree.soundgap.App;
 import github.digithree.soundgap.player.SinVoicePlayer;
@@ -18,28 +19,48 @@ public class SendMessageHandler implements SinVoicePlayer.Listener {
         void messageSent();
     }
 
-    private final static String CODEBOOK = "0123456789";
-    private final static int TIME_BETWEEN_REPEATS = 1000;
+
+    //private final static int TIME_BETWEEN_REPEATS = 1000;
 
     private SinVoicePlayer mSinVoicePlayer;
+    private boolean mSending;
 
     private Callback mCallback;
 
 
     public SendMessageHandler(@NonNull Callback callback) {
-        mSinVoicePlayer = new SinVoicePlayer(CODEBOOK);
+        mSinVoicePlayer = new SinVoicePlayer();
         mSinVoicePlayer.setListener(this);
         mCallback = callback;
+        mSending = false;
     }
 
 
     // public interface
 
     public void sendMessage(String text) {
-        // TODO : use text String instead of bogus string
-        mSinVoicePlayer.play("139410", true, TIME_BETWEEN_REPEATS);
+        if (!mSending) {
+            if (!TextUtils.isEmpty(text)) {
+                String codedMessage = MessageCodex.encode(text);
+                mSinVoicePlayer.play(codedMessage, false, 0);
+                mSending = true;
+            } else {
+                if (mCallback != null) {
+                    mCallback.sendError();
+                }
+            }
+        }
     }
 
+    public void cancelSendingMessage() {
+        if (mSending) {
+            mSinVoicePlayer.stop();
+            mSending = false;
+            if (mCallback != null) {
+                mCallback.sendError(); // TODO : consider making good stop callback method
+            }
+        }
+    }
 
     // SinVoicePlayer.Listener implementation
 
@@ -53,6 +74,7 @@ public class SendMessageHandler implements SinVoicePlayer.Listener {
                 }
             });
         }
+        mSending = false;
     }
 
     @Override
@@ -65,5 +87,6 @@ public class SendMessageHandler implements SinVoicePlayer.Listener {
                 }
             });
         }
+        mSending = true;
     }
 }

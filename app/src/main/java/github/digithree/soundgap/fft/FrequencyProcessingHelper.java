@@ -63,6 +63,10 @@ public class FrequencyProcessingHelper {
         public String getStr() {
             return str;
         }
+
+        public String toString() {
+            return "[MidiNote "+str+"]";
+        }
     }
 
     private static final String[] LP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};

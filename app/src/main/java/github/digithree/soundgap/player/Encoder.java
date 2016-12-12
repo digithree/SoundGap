@@ -63,7 +63,7 @@ public class Encoder implements SinGenerator.Listener, SinGenerator.Callback {
     }
 
     public final static int getMaxCodeCount() {
-        return Common.CODE_FREQUENCY.length;
+        return CodeBook.getInstance().getCodeFrequencyTable().length;
     }
 
     public final boolean isStoped() {
@@ -87,8 +87,8 @@ public class Encoder implements SinGenerator.Listener, SinGenerator.Callback {
             for (int index : codes) {
                 if (STATE_ENCODING == mState) {
                     Log.d(TAG, "encode:" + index);
-                    if (index >= 0 && index < Common.CODE_FREQUENCY.length) {
-                        mSinGenerator.gen(Common.CODE_FREQUENCY[index], duration);
+                    if (index >= 0 && index < CodeBook.getInstance().getCodeFrequencyTable().length) {
+                        mSinGenerator.gen(CodeBook.getInstance().getCodeFrequencyTable()[index], duration);
                     } else {
                         Log.e(TAG, "code index error");
                     }
