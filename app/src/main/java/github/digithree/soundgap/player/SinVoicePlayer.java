@@ -25,9 +25,13 @@ package github.digithree.soundgap.player;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Context;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.text.TextUtils;
 import android.util.Log;
+
+import github.digithree.soundgap.App;
 
 
 public class SinVoicePlayer implements Encoder.Listener, Encoder.Callback, PcmPlayer.Listener, PcmPlayer.Callback {
@@ -36,8 +40,6 @@ public class SinVoicePlayer implements Encoder.Listener, Encoder.Callback, PcmPl
     private final static int STATE_START = 1;
     private final static int STATE_STOP = 2;
     private final static int STATE_PENDING = 3;
-
-    private final static int DEFAULT_GEN_DURATION = 200;
 
     private List<Integer> mCodes = new ArrayList<Integer>();
 
@@ -50,24 +52,50 @@ public class SinVoicePlayer implements Encoder.Listener, Encoder.Callback, PcmPl
     private Thread mPlayThread;
     private Thread mEncodeThread;
 
+    private int mNotePlayLen;
+
     public static interface Listener {
         void onPlayStart();
 
         void onPlayEnd();
     }
 
-    public SinVoicePlayer() {
-        this(Common.DEFAULT_SAMPLE_RATE, Common.DEFAULT_BUFFER_SIZE, Common.DEFAULT_BUFFER_COUNT);
+    public SinVoicePlayer(int notePlayLen) {
+        this(Common.DEFAULT_SAMPLE_RATE, Common.DEFAULT_BUFFER_SIZE, Common.DEFAULT_BUFFER_COUNT, notePlayLen);
     }
 
-    public SinVoicePlayer(int sampleRate, int bufferSize, int buffCount) {
+    public SinVoicePlayer(int sampleRate, int bufferSize, int buffCount, int notePlayLen) {
         mState = STATE_STOP;
         mBuffer = new Buffer(buffCount, bufferSize);
+        mNotePlayLen = notePlayLen;
 
         mEncoder = new Encoder(this, sampleRate, SinGenerator.BITS_16, bufferSize);
         mEncoder.setListener(this);
         mPlayer = new PcmPlayer(this, sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
         mPlayer.setListener(this);
+
+        AudioManager audioManager = (AudioManager) App.getStaticInstance().getSystemService(Context.AUDIO_SERVICE);
+        audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+            @Override
+            public void onAudioFocusChange(int focusChange) {
+                switch (focusChange) {
+                    case AudioManager.AUDIOFOCUS_GAIN:
+                        Log.v(TAG, "onAudioFocusChange, AudioManager.AUDIOFOCUS_GAIN");
+                        break;
+                    case AudioManager.AUDIOFOCUS_LOSS:
+                        Log.v(TAG, "onAudioFocusChange, AudioManager.AUDIOFOCUS_GAIN");
+                        break;
+                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                        Log.v(TAG, "onAudioFocusChange, AudioManager.AUDIOFOCUS_GAIN");
+                        break;
+                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                        Log.v(TAG, "onAudioFocusChange, AudioManager.AUDIOFOCUS_GAIN");
+                        break;
+                    default:
+                        Log.e(TAG, "onAudioFocusChange, focusChange flag not recognised");
+                }
+            }
+        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
     }
 
     public void setListener(Listener listener) {
@@ -120,7 +148,7 @@ public class SinVoicePlayer implements Encoder.Listener, Encoder.Callback, PcmPl
                 public void run() {
                     do {
                         Log.d(TAG, "encode start");
-                        mEncoder.encode(mCodes, DEFAULT_GEN_DURATION, muteInterval);
+                        mEncoder.encode(mCodes, mNotePlayLen, muteInterval);
                         Log.d(TAG, "encode end");
 
                         mEncoder.stop();

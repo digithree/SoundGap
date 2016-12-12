@@ -13,14 +13,14 @@ import github.digithree.soundgap.player.SinVoicePlayer;
 
 public class SendMessageHandler implements SinVoicePlayer.Listener {
 
+    private static final int NOTE_PLAY_LEN = 150;
+
     public interface Callback {
         void startedSending();
         void sendError();
         void messageSent();
     }
 
-
-    //private final static int TIME_BETWEEN_REPEATS = 1000;
 
     private SinVoicePlayer mSinVoicePlayer;
     private boolean mSending;
@@ -29,7 +29,7 @@ public class SendMessageHandler implements SinVoicePlayer.Listener {
 
 
     public SendMessageHandler(@NonNull Callback callback) {
-        mSinVoicePlayer = new SinVoicePlayer();
+        mSinVoicePlayer = new SinVoicePlayer(NOTE_PLAY_LEN);
         mSinVoicePlayer.setListener(this);
         mCallback = callback;
         mSending = false;

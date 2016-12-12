@@ -17,7 +17,7 @@ public class App extends Application {
         return sInstance;
     }
 
-    public static Handler sMainThreadHandler, sCVHandler;
+    private static Handler sMainThreadHandler, sBackgroundHandler;
 
     @Override
     public void onCreate() {
@@ -33,9 +33,9 @@ public class App extends Application {
     }
 
     public Handler getHandler() {
-        if (sCVHandler == null) {
-            sCVHandler = new Handler();
+        if (sBackgroundHandler == null) {
+            sBackgroundHandler = new Handler();
         }
-        return sCVHandler;
+        return sBackgroundHandler;
     }
 }

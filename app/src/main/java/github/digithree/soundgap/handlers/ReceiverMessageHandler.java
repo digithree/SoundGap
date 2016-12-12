@@ -5,6 +5,7 @@
 
 package github.digithree.soundgap.handlers;
 
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -15,14 +16,18 @@ import github.digithree.soundgap.App;
 import github.digithree.soundgap.fft.AudioProcessingThread;
 import github.digithree.soundgap.fft.FrequencyProcessingHelper;
 import github.digithree.soundgap.player.CodeBook;
+import github.digithree.soundgap.utils.ManagementUtil;
 
 public class ReceiverMessageHandler implements AudioProcessingThread.Callback {
     private static final String TAG = ReceiverMessageHandler.class.getSimpleName();
+
+    private static final int TIMER_DELAY = 3000;
 
     public interface Callback {
         void startedListening();
         void stoppedListening();
         void heardMessage(String message);
+        void errorListening();
     }
 
     private AudioProcessingThread mAudioProcessingThread;
@@ -40,10 +45,15 @@ public class ReceiverMessageHandler implements AudioProcessingThread.Callback {
     private boolean mActive = false;
     private boolean mListening = false;
 
+    private Handler mTimerHandler;
+    private Runnable mTimerRunnable;
+    private int mTimerCode;
+
 
     public ReceiverMessageHandler(@NonNull Callback callback) {
         mCallback = callback;
         midiNoteArrayList = new ArrayList<>();
+        mTimerHandler = App.getStaticInstance().getHandler();
     }
 
 
@@ -94,19 +104,24 @@ public class ReceiverMessageHandler implements AudioProcessingThread.Callback {
                 mListening = true;
                 // will capture notes the next round
                 Log.d(TAG, "processMidiNotes, got start note");
+                midiNoteArrayList.clear();
+                restartTimer();
             }
         } else {
             if (midiNote.getStr().equals(CodeBook.getInstance().getCodeNoteNameTable()[CodeBook.getInstance().getEndTokenIdx()])) {
                 Log.d(TAG, "processMidiNotes, stopping listening");
                 mListening = false;
                 stop();
+                stopTimer();
                 extractMessageFromHeardNotes();
             } else if (midiNote.getStr().equals(CodeBook.getInstance().getCodeNoteNameTable()[CodeBook.getInstance().getStartTokenIdx()])) {
                 //ignore, used as spacer
                 Log.d(TAG, "processMidiNotes, heard spacer, ignoring");
+                restartTimer();
             } else {
                 Log.d(TAG, "processMidiNotes, added note");
                 midiNoteArrayList.add(midiNote);
+                restartTimer();
             }
         }
     }
@@ -124,6 +139,44 @@ public class ReceiverMessageHandler implements AudioProcessingThread.Callback {
                 mCallback.heardMessage(decodedMessage);
             }
         }
+        midiNoteArrayList.clear();
+    }
+
+    // timer
+
+    private void stopTimer() {
+        if (mTimerHandler != null) {
+            if (mTimerRunnable != null) {
+                mTimerHandler.removeCallbacks(mTimerRunnable);
+                mTimerRunnable = null;
+            }
+        }
+    }
+
+    private void restartTimer() {
+        stopTimer();
+        final int timerCode = ManagementUtil.generateRandomCode();
+        mTimerCode = timerCode;
+        mTimerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (timerCode == mTimerCode) {
+                    // no change in minimum time, restart listening process
+                    mListening = false;
+                    midiNoteArrayList.clear();
+                    Log.d(TAG, "TIMER EXPIRED, took too long to understand message, restarting listening");
+                    App.getStaticInstance().getMainThreadHandler().post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mCallback != null) {
+                                mCallback.errorListening();
+                            }
+                        }
+                    });
+                } // else do nothing, is detached from mTimerHandler
+            }
+        };
+        mTimerHandler.postDelayed(mTimerRunnable, TIMER_DELAY);
     }
 
 

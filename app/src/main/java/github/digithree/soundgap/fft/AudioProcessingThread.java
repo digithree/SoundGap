@@ -64,8 +64,8 @@ public class AudioProcessingThread extends Thread {
     private final static int RECORDER_AGC_OFF = MediaRecorder.AudioSource.VOICE_RECOGNITION;
     private final static int BYTE_OF_SAMPLE = 2;
 
-    private static int fftLen = 1024;
-    private static int sampleRate = 16000;
+    private static int fftLen = 512;
+    private static int sampleRate = 8000;
     private static int nFFTAverage = 2;
 
     private boolean isMeasure = true;

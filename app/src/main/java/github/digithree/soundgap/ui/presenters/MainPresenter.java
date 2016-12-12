@@ -101,6 +101,10 @@ public class MainPresenter extends BasePresenter<IMainView> implements IActivity
         getView().addNewMessage(message);
     }
 
+    @Override
+    public void errorListening() {
+        getView().showListeningForMessagesError();
+    }
 
     // SendMessageHandler.Callback implementation
 

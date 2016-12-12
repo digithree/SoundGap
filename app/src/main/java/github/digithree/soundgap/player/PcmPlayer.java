@@ -38,13 +38,13 @@ public class PcmPlayer {
     private Listener mListener;
     private Callback mCallback;
 
-    public static interface Listener {
+    public interface Listener {
         void onPlayStart();
 
         void onPlayStop();
     }
 
-    public static interface Callback {
+    public interface Callback {
         Buffer.BufferData getPlayBuffer();
 
         void freePlayData(Buffer.BufferData data);
